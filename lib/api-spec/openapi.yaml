@@ -1,0 +1,1178 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: EGE/OGE Preparation Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: subjects
+    description: Subjects and topics
+  - name: tasks
+    description: Exam tasks
+  - name: tests
+    description: Tests and variants
+  - name: progress
+    description: Student progress and stats
+  - name: coins
+    description: Coin system and gamification
+  - name: bets
+    description: Betting system
+  - name: classes
+    description: Teacher virtual classes
+  - name: homework
+    description: Homework assignments
+  - name: leaderboard
+    description: Rankings
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /subjects:
+    get:
+      operationId: listSubjects
+      tags: [subjects]
+      summary: List all subjects
+      responses:
+        "200":
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subject"
+
+  /subjects/{subjectId}/topics:
+    get:
+      operationId: listTopics
+      tags: [subjects]
+      summary: List topics for a subject
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Topic"
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks with filters
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: integer
+        - name: topicId
+          in: query
+          schema:
+            type: integer
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+        - name: examType
+          in: query
+          schema:
+            type: string
+        - name: taskNumber
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskList"
+
+  /tasks/{taskId}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a specific task with solution
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskDetail"
+        "404":
+          description: Not found
+
+  /tasks/{taskId}/submit:
+    post:
+      operationId: submitAnswer
+      tags: [tasks]
+      summary: Submit answer and get result
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerInput"
+      responses:
+        "200":
+          description: Answer result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerResult"
+
+  /tests:
+    get:
+      operationId: listTests
+      tags: [tests]
+      summary: List available tests/variants
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: integer
+        - name: examType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Test"
+    post:
+      operationId: createTest
+      tags: [tests]
+      summary: Create a custom test
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Test"
+
+  /tests/{testId}:
+    get:
+      operationId: getTest
+      tags: [tests]
+      summary: Get test with tasks
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Test with tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestDetail"
+
+  /tests/{testId}/submit:
+    post:
+      operationId: submitTest
+      tags: [tests]
+      summary: Submit full test answers
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestSubmission"
+      responses:
+        "200":
+          description: Test results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestResult"
+
+  /progress/summary:
+    get:
+      operationId: getProgressSummary
+      tags: [progress]
+      summary: Get student progress summary
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+
+  /progress/by-topic:
+    get:
+      operationId: getProgressByTopic
+      tags: [progress]
+      summary: Get progress breakdown by topic
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: integer
+        - name: userId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Progress by topic
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopicProgress"
+
+  /progress/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [progress]
+      summary: Get recent activity feed
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /coins/balance:
+    get:
+      operationId: getCoinBalance
+      tags: [coins]
+      summary: Get user coin balance
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Coin balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoinBalance"
+
+  /coins/history:
+    get:
+      operationId: getCoinHistory
+      tags: [coins]
+      summary: Get coin transaction history
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Coin history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoinTransaction"
+
+  /bets:
+    get:
+      operationId: listBets
+      tags: [bets]
+      summary: List bets
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of bets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bet"
+    post:
+      operationId: placeBet
+      tags: [bets]
+      summary: Place a bet on exam result
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BetInput"
+      responses:
+        "201":
+          description: Bet placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bet"
+
+  /bets/active:
+    get:
+      operationId: getActiveBets
+      tags: [bets]
+      summary: Get active bets summary
+      responses:
+        "200":
+          description: Active bets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveBetsSummary"
+
+  /classes:
+    get:
+      operationId: listClasses
+      tags: [classes]
+      summary: List teacher's classes
+      parameters:
+        - name: teacherId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Class"
+    post:
+      operationId: createClass
+      tags: [classes]
+      summary: Create a virtual class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassInput"
+      responses:
+        "201":
+          description: Created class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Class"
+
+  /classes/{classId}:
+    get:
+      operationId: getClass
+      tags: [classes]
+      summary: Get class details with students
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Class details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassDetail"
+
+  /classes/{classId}/analytics:
+    get:
+      operationId: getClassAnalytics
+      tags: [classes]
+      summary: Get class-wide analytics
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Class analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassAnalytics"
+
+  /homework:
+    get:
+      operationId: listHomework
+      tags: [homework]
+      summary: List homework assignments
+      parameters:
+        - name: classId
+          in: query
+          schema:
+            type: integer
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of homework
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Homework"
+    post:
+      operationId: createHomework
+      tags: [homework]
+      summary: Create homework assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HomeworkInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Homework"
+
+  /homework/{homeworkId}:
+    get:
+      operationId: getHomework
+      tags: [homework]
+      summary: Get homework with tasks and submissions
+      parameters:
+        - name: homeworkId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Homework detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeworkDetail"
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get leaderboard rankings
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: integer
+        - name: period
+          in: query
+          schema:
+            type: string
+        - name: classId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Subject:
+      type: object
+      required: [id, name, examType, taskCount, color, icon]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        examType:
+          type: string
+        taskCount:
+          type: integer
+        color:
+          type: string
+        icon:
+          type: string
+        description:
+          type: ["string", "null"]
+
+    Topic:
+      type: object
+      required: [id, subjectId, name, taskCount]
+      properties:
+        id:
+          type: integer
+        subjectId:
+          type: integer
+        name:
+          type: string
+        taskCount:
+          type: integer
+        taskNumbers:
+          type: array
+          items:
+            type: integer
+
+    Task:
+      type: object
+      required: [id, subjectId, topicId, taskNumber, examType, difficulty, question, answerType]
+      properties:
+        id:
+          type: integer
+        subjectId:
+          type: integer
+        topicId:
+          type: integer
+        taskNumber:
+          type: integer
+        examType:
+          type: string
+        difficulty:
+          type: string
+        question:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        answerType:
+          type: string
+        options:
+          type: ["array", "null"]
+          items:
+            type: string
+        year:
+          type: ["integer", "null"]
+        source:
+          type: ["string", "null"]
+
+    TaskDetail:
+      allOf:
+        - $ref: "#/components/schemas/Task"
+        - type: object
+          properties:
+            correctAnswer:
+              type: string
+            solution:
+              type: string
+            lifehack:
+              type: ["string", "null"]
+            relatedTaskIds:
+              type: array
+              items:
+                type: integer
+
+    TaskList:
+      type: object
+      required: [tasks, total, offset, limit]
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+
+    AnswerInput:
+      type: object
+      required: [answer, userId]
+      properties:
+        answer:
+          type: string
+        userId:
+          type: integer
+
+    AnswerResult:
+      type: object
+      required: [correct, correctAnswer, coinsEarned, explanation]
+      properties:
+        correct:
+          type: boolean
+        correctAnswer:
+          type: string
+        coinsEarned:
+          type: integer
+        explanation:
+          type: string
+        lifehack:
+          type: ["string", "null"]
+        streakBonus:
+          type: integer
+
+    Test:
+      type: object
+      required: [id, title, subjectId, examType, taskCount, duration, difficulty]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        subjectId:
+          type: integer
+        examType:
+          type: string
+        taskCount:
+          type: integer
+        duration:
+          type: integer
+        difficulty:
+          type: string
+        year:
+          type: ["integer", "null"]
+        completionCount:
+          type: integer
+        averageScore:
+          type: ["number", "null"]
+
+    TestInput:
+      type: object
+      required: [title, subjectId, taskIds]
+      properties:
+        title:
+          type: string
+        subjectId:
+          type: integer
+        taskIds:
+          type: array
+          items:
+            type: integer
+        duration:
+          type: integer
+
+    TestDetail:
+      allOf:
+        - $ref: "#/components/schemas/Test"
+        - type: object
+          required: [tasks]
+          properties:
+            tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/Task"
+
+    TestSubmission:
+      type: object
+      required: [userId, answers]
+      properties:
+        userId:
+          type: integer
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskAnswer"
+        timeSpentSeconds:
+          type: integer
+
+    TaskAnswer:
+      type: object
+      required: [taskId, answer]
+      properties:
+        taskId:
+          type: integer
+        answer:
+          type: string
+
+    TestResult:
+      type: object
+      required: [testId, score, maxScore, percentage, coinsEarned, taskResults]
+      properties:
+        testId:
+          type: integer
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        percentage:
+          type: number
+        coinsEarned:
+          type: integer
+        timeSpentSeconds:
+          type: ["integer", "null"]
+        taskResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskResult"
+
+    TaskResult:
+      type: object
+      required: [taskId, correct, userAnswer, correctAnswer]
+      properties:
+        taskId:
+          type: integer
+        correct:
+          type: boolean
+        userAnswer:
+          type: string
+        correctAnswer:
+          type: string
+
+    ProgressSummary:
+      type: object
+      required: [totalTasksSolved, correctAnswers, accuracy, currentStreak, maxStreak, totalCoins, level, levelProgress, subjectStats]
+      properties:
+        totalTasksSolved:
+          type: integer
+        correctAnswers:
+          type: integer
+        accuracy:
+          type: number
+        currentStreak:
+          type: integer
+        maxStreak:
+          type: integer
+        totalCoins:
+          type: integer
+        level:
+          type: integer
+        levelProgress:
+          type: number
+        subjectStats:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubjectStat"
+
+    SubjectStat:
+      type: object
+      required: [subjectId, subjectName, tasksSolved, accuracy]
+      properties:
+        subjectId:
+          type: integer
+        subjectName:
+          type: string
+        tasksSolved:
+          type: integer
+        accuracy:
+          type: number
+
+    TopicProgress:
+      type: object
+      required: [topicId, topicName, subjectId, tasksSolved, totalTasks, accuracy]
+      properties:
+        topicId:
+          type: integer
+        topicName:
+          type: string
+        subjectId:
+          type: integer
+        tasksSolved:
+          type: integer
+        totalTasks:
+          type: integer
+        accuracy:
+          type: number
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, coinsChange, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        coinsChange:
+          type: integer
+        subjectName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    CoinBalance:
+      type: object
+      required: [userId, balance, totalEarned, totalSpent]
+      properties:
+        userId:
+          type: integer
+        balance:
+          type: integer
+        totalEarned:
+          type: integer
+        totalSpent:
+          type: integer
+        rank:
+          type: ["integer", "null"]
+
+    CoinTransaction:
+      type: object
+      required: [id, userId, amount, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        amount:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+
+    Bet:
+      type: object
+      required: [id, userId, targetUserId, targetUserName, examType, subjectId, predictedScore, wageredCoins, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        targetUserId:
+          type: integer
+        targetUserName:
+          type: string
+        examType:
+          type: string
+        subjectId:
+          type: integer
+        subjectName:
+          type: string
+        predictedScore:
+          type: integer
+        wageredCoins:
+          type: integer
+        potentialWin:
+          type: integer
+        status:
+          type: string
+        actualScore:
+          type: ["integer", "null"]
+        resolvedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    BetInput:
+      type: object
+      required: [userId, targetUserId, examType, subjectId, predictedScore, wageredCoins]
+      properties:
+        userId:
+          type: integer
+        targetUserId:
+          type: integer
+        examType:
+          type: string
+        subjectId:
+          type: integer
+        predictedScore:
+          type: integer
+        wageredCoins:
+          type: integer
+
+    ActiveBetsSummary:
+      type: object
+      required: [totalBets, totalWagered, potentialWinnings, recentBets]
+      properties:
+        totalBets:
+          type: integer
+        totalWagered:
+          type: integer
+        potentialWinnings:
+          type: integer
+        recentBets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bet"
+
+    Class:
+      type: object
+      required: [id, teacherId, name, subject, examType, studentCount, inviteCode, createdAt]
+      properties:
+        id:
+          type: integer
+        teacherId:
+          type: integer
+        name:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        studentCount:
+          type: integer
+        inviteCode:
+          type: string
+        activeHomeworkCount:
+          type: integer
+        createdAt:
+          type: string
+
+    ClassInput:
+      type: object
+      required: [teacherId, name, subject, examType]
+      properties:
+        teacherId:
+          type: integer
+        name:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+
+    ClassDetail:
+      allOf:
+        - $ref: "#/components/schemas/Class"
+        - type: object
+          required: [students]
+          properties:
+            students:
+              type: array
+              items:
+                $ref: "#/components/schemas/StudentSummary"
+
+    StudentSummary:
+      type: object
+      required: [id, name, tasksSolved, accuracy, lastActive]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tasksSolved:
+          type: integer
+        accuracy:
+          type: number
+        coinsBalance:
+          type: integer
+        lastActive:
+          type: string
+
+    ClassAnalytics:
+      type: object
+      required: [classId, averageAccuracy, topStudents, weakTopics, homeworkCompletionRate]
+      properties:
+        classId:
+          type: integer
+        averageAccuracy:
+          type: number
+        topStudents:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentSummary"
+        weakTopics:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeakTopic"
+        homeworkCompletionRate:
+          type: number
+
+    WeakTopic:
+      type: object
+      required: [topicId, topicName, averageAccuracy, studentCount]
+      properties:
+        topicId:
+          type: integer
+        topicName:
+          type: string
+        averageAccuracy:
+          type: number
+        studentCount:
+          type: integer
+
+    Homework:
+      type: object
+      required: [id, classId, teacherId, title, taskCount, dueDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        classId:
+          type: integer
+        teacherId:
+          type: integer
+        title:
+          type: string
+        taskCount:
+          type: integer
+        dueDate:
+          type: string
+        status:
+          type: string
+        submissionCount:
+          type: integer
+        averageScore:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+
+    HomeworkInput:
+      type: object
+      required: [classId, teacherId, title, taskIds, dueDate]
+      properties:
+        classId:
+          type: integer
+        teacherId:
+          type: integer
+        title:
+          type: string
+        taskIds:
+          type: array
+          items:
+            type: integer
+        dueDate:
+          type: string
+
+    HomeworkDetail:
+      allOf:
+        - $ref: "#/components/schemas/Homework"
+        - type: object
+          required: [tasks, submissions]
+          properties:
+            tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/Task"
+            submissions:
+              type: array
+              items:
+                $ref: "#/components/schemas/HomeworkSubmission"
+
+    HomeworkSubmission:
+      type: object
+      required: [id, studentId, studentName, score, maxScore, submittedAt]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        submittedAt:
+          type: string
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, userId, userName, score, accuracy, tasksSolved, coinsBalance]
+      properties:
+        rank:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        score:
+          type: integer
+        accuracy:
+          type: number
+        tasksSolved:
+          type: integer
+        coinsBalance:
+          type: integer
+        subjectName:
+          type: ["string", "null"]

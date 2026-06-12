@@ -107,7 +107,7 @@ export function TaskPage({ taskId, subjectId, onNavigate }: TaskPageProps) {
     }).then(() => {});
 
     if (isCorrect) {
-      supabase.rpc("increment_user_stats", { user_id_param: 1, coins_param: isCorrect ? 5 : 0 }).catch(() => {});
+      void supabase.rpc("increment_user_stats", { user_id_param: 1, coins_param: isCorrect ? 5 : 0 });
     }
   }
 

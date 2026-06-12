@@ -31,6 +31,7 @@ interface TaskRow {
   question: string;
   answer_type: string;
   year: number | null;
+  topic_id: number;
 }
 
 interface SubjectRow {
